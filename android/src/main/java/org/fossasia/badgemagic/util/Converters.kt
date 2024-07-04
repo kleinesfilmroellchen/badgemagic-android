@@ -41,7 +41,7 @@ object Converters {
         if (drawableIcon is VectorDrawable)
             bm = ImageUtils.scaleBitmap(ImageUtils.vectorToBitmap(drawableIcon), 44)
         else if (drawableIcon is BitmapDrawable)
-            bm = ImageUtils.scaleBitmap((drawableIcon).bitmap, 44)
+            bm = (drawableIcon).bitmap
         return convertBitmapToLEDHex(bm, invertLED)
     }
 

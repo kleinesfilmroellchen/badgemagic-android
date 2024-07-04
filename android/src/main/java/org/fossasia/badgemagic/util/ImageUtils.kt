@@ -1,12 +1,17 @@
 package org.fossasia.badgemagic.util
 
 import android.graphics.Bitmap
+import android.graphics.Bitmap.Config
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.VectorDrawable
+import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.get
+import androidx.core.graphics.scale
+import androidx.core.graphics.set
 import org.fossasia.badgemagic.core.android.log.Timber
+import org.fossasia.badgemagic.ui.custom.badgeHeight
 
 object ImageUtils {
     fun trim(source: Bitmap, toDimen: Int): Bitmap {
@@ -80,6 +85,34 @@ object ImageUtils {
         return Bitmap.createScaledBitmap(trimmedBitmap, outWidth, outHeight, false)
     }
 
+    fun convertToInternalFormat(originalBitmap: Bitmap): Bitmap {
+        val aspectRatio = originalBitmap.width.toDouble() / originalBitmap.height.toDouble()
+        // Rescale to fit height (image can scoll)
+        var scaledBitmap = if (originalBitmap.height > badgeHeight) {
+            val newWidth = aspectRatio * badgeHeight
+            Timber.tag(javaClass.simpleName)
+                .i("Resizing incoming image from ${originalBitmap.width}x${originalBitmap.height} to ${newWidth.toInt()}x$badgeHeight (old aspect: $aspectRatio)")
+            originalBitmap.scale(width = newWidth.toInt(), height = badgeHeight, true)
+        } else {
+            originalBitmap
+        }
+        scaledBitmap = scaledBitmap.copy(Config.ARGB_8888, true)
+
+        // Convert normal image into two-tone format used internally
+        for (x in 0 until scaledBitmap.width) {
+            for (y in 0 until scaledBitmap.height) {
+                val originalValue = scaledBitmap[x, y]
+                scaledBitmap[x, y] =
+                    if ((Color.luminance(originalValue) < 0.5) or (Color.alpha(originalValue) < 128)) {
+                        Color.TRANSPARENT
+                    } else {
+                        Color.BLACK
+                    }
+            }
+        }
+        return scaledBitmap
+    }
+
     fun vectorToBitmap(drawable: VectorDrawable): Bitmap {
         val bitmap: Bitmap = Bitmap.createBitmap(220, 55, Bitmap.Config.ARGB_8888)
         return try {
@@ -96,9 +129,6 @@ object ImageUtils {
     }
 
     fun convertToBitmap(drawable: Drawable?): Bitmap {
-        return if (drawable is BitmapDrawable)
-            drawable.bitmap
-        else
-            Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+        return drawable?.toBitmap() ?: Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
     }
 }

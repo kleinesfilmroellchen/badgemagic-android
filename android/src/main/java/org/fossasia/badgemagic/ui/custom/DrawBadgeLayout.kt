@@ -17,6 +17,9 @@ import org.fossasia.badgemagic.data.badge_preview.CheckList
 import org.fossasia.badgemagic.data.draw_layout.DrawMode
 import org.fossasia.badgemagic.util.Converters
 
+const val badgeHeight = 11
+const val badgeWidth = 44
+
 class DrawBadgeLayout(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
     private var ledDisabled: Drawable? = context?.getDrawable(R.drawable.ic_led)
@@ -25,9 +28,6 @@ class DrawBadgeLayout(context: Context?, attrs: AttributeSet?) : View(context, a
     private lateinit var bgBounds: RectF
 
     private val oneByte = 8
-
-    private var badgeHeight = 11
-    private var badgeWidth = 44
 
     private var cells = mutableListOf<Cell>()
 

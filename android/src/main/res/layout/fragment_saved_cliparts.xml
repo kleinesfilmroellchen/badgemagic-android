@@ -10,14 +10,42 @@
     </data>
 
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:gravity="center|top"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="54dp"
+            android:layout_margin="@dimen/draw_layout_button_padding"
+            android:gravity="center"
+            android:onClick="@{() -> viewModel.loadClipart()}"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="@dimen/draw_button_generic_dimen"
+                android:layout_height="@dimen/draw_button_generic_dimen"
+                android:src="@drawable/ic_clipart_add" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/menu_import" />
+
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/card_spacing"
+            app:setAdapter="@{viewModel.getAdapter()}" />
 
         <LinearLayout
             android:id="@+id/empty_saved_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
             android:visibility="@{viewModel.isEmpty() ? View.VISIBLE : View.GONE}">
@@ -59,12 +87,6 @@
 
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="@dimen/card_spacing"
-            app:setAdapter="@{viewModel.getAdapter()}" />
-
-    </FrameLayout>
+    </LinearLayout>
 
 </layout>

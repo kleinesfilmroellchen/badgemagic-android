@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import androidx.core.graphics.drawable.toBitmap
+import org.fossasia.badgemagic.core.android.log.Timber
 import org.fossasia.badgemagic.data.BadgeConfig
 import org.fossasia.badgemagic.data.CONF_FLASH
 import org.fossasia.badgemagic.data.CONF_HEX_STRINGS
@@ -26,10 +28,8 @@ class StorageUtils(val context: Context) {
     private val clipExt = ".png"
 
     private fun checkDirectory(): Boolean {
-        if (!clipartDir.exists())
-            return clipartDir.mkdirs()
-        if (!badgeDir.exists())
-            return badgeDir.mkdirs()
+        if (!clipartDir.exists()) return clipartDir.mkdirs()
+        if (!badgeDir.exists()) return badgeDir.mkdirs()
         return true
     }
 
@@ -51,8 +51,7 @@ class StorageUtils(val context: Context) {
             for (i in files.indices) {
                 if (getFileExtension(files[i].name) == badgeExt) {
                     val json = files[i].readText()
-                    if (checkValidJSON(json))
-                        list.add(ConfigInfo(json, files[i].name))
+                    if (checkValidJSON(json)) list.add(ConfigInfo(json, files[i].name))
                 }
             }
         }
@@ -88,8 +87,7 @@ class StorageUtils(val context: Context) {
         checkDirectory()
         val inputStream = context.contentResolver.openInputStream(uri ?: Uri.EMPTY)
         var fileName = getFileName(context, uri ?: Uri.EMPTY)
-        if (!fileName.contains(badgeExt))
-            fileName += badgeExt
+        if (!fileName.contains(badgeExt)) fileName += badgeExt
         val dest = File(badgeDir, fileName)
         inputStream?.let {
             val jsonString = BufferedReader(InputStreamReader(it)).readLine()
@@ -104,12 +102,9 @@ class StorageUtils(val context: Context) {
     private fun checkValidJSON(jsonString: String): Boolean {
         return try {
             val obj = JSONObject(jsonString)
-            return obj.has(CONF_HEX_STRINGS) &&
-                obj.has(CONF_INVERTED) &&
-                obj.has(CONF_MARQUEE) &&
-                obj.has(CONF_FLASH) &&
-                obj.has(CONF_MODE) &&
-                obj.has(CONF_SPEED)
+            return obj.has(CONF_HEX_STRINGS) && obj.has(CONF_INVERTED) && obj.has(CONF_MARQUEE) && obj.has(
+                CONF_FLASH
+            ) && obj.has(CONF_MODE) && obj.has(CONF_SPEED)
         } catch (e: Exception) {
             false
         }
@@ -124,8 +119,7 @@ class StorageUtils(val context: Context) {
             cursor.use {
                 if (it != null && it.moveToFirst()) {
                     var index = it.getColumnIndex("_data")
-                    if (index == -1)
-                        index = it.getColumnIndex("_display_name")
+                    if (index == -1) index = it.getColumnIndex("_display_name")
                     result = it.getString(index)
                     uri = Uri.parse(result)
                 }
@@ -135,8 +129,7 @@ class StorageUtils(val context: Context) {
         result = uri.toString()
 
         val cut = result.lastIndexOf('/')
-        if (cut != -1)
-            result = result.substring(cut + 1)
+        if (cut != -1) result = result.substring(cut + 1)
         return result
     }
 
@@ -151,10 +144,14 @@ class StorageUtils(val context: Context) {
         val file = File.createTempFile("clip", clipExt, clipartDir)
         try {
             val out = FileOutputStream(file)
+            // PNG ignores the fact that the bitmap has a perfectly valid alpha channel and not write alpha out if this flag is not set.
+            // This is undocumented behavior and took three hours to debug, so you shouldn't change it back :^)
+            bitmap.setHasAlpha(true)
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             out.flush()
             out.close()
         } catch (e: Exception) {
+            Timber.tag(javaClass.simpleName).wtf(e)
             return false
         }
         return true
@@ -165,10 +162,12 @@ class StorageUtils(val context: Context) {
         val file = File(clipartDir, fileName)
         try {
             val out = FileOutputStream(file)
+            bitmap.setHasAlpha(true)
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             out.flush()
             out.close()
         } catch (e: Exception) {
+            Timber.tag(javaClass.simpleName).wtf(e)
             return false
         }
         return true
@@ -197,5 +196,18 @@ class StorageUtils(val context: Context) {
         checkDirectory()
         val deleteFile = File(clipartDir, fileName)
         deleteFile.delete()
+    }
+
+    fun importClipArt(uri: Uri): Boolean {
+        checkDirectory()
+        val inputStream = context.contentResolver.openInputStream(uri) ?: return false
+        val originalDrawable =
+            Drawable.createFromStream(inputStream, uri.toString()) ?: return false
+        val originalBitmap = originalDrawable.toBitmap(config = Bitmap.Config.ARGB_8888)
+        val scaledBitmap = ImageUtils.convertToInternalFormat(originalBitmap)
+        saveClipArt(scaledBitmap)
+
+        inputStream.close()
+        return true
     }
 }

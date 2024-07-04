@@ -121,4 +121,6 @@
 
     <string name="empty_saved_clipart_message">Looks like there are no saved cliparts yet</string>
     <string name="empty_saved_cliparts_title">No Saved Cliparts !</string>
+    <string name="clipart_import_success">Clipart imported successfully</string>
+    <string name="clipart_import_error">Error importing clipart</string>
 </resources>
