@@ -125,6 +125,7 @@ object DataToByteArrayConverter {
     )
 
     fun convert(data: DataToSend): List<ByteArray> {
+        println(data)
         check(data.messages.size <= MAX_MESSAGES) { "Max messages=$MAX_MESSAGES" }
 
         return StringBuilder()
@@ -146,6 +147,7 @@ object DataToByteArrayConverter {
                 .map { ByteArrayUtils.hexStringToByteArray(it) }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun getFlash(data: DataToSend): String {
         val flashByte = ByteArray(1)
 
@@ -153,6 +155,7 @@ object DataToByteArrayConverter {
             val flashFlag = if (message.flash) 1 else 0
             flashByte[0] = flashByte[0] or (flashFlag shl index).toByte()
         }
+        println("${flashByte[0].toHexString()}")
 
         return ByteArrayUtils.byteArrayToHexString(flashByte)
     }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.lifecycle.Observer
@@ -41,6 +42,8 @@ class SavedBadgesFragment : BaseFragment() {
 
     private val bluetoothAdapter: BluetoothAdapter by inject()
 
+    private var selectedForSending: Set<ConfigInfo> = HashSet()
+
     private var _binding: FragmentMainSaveBinding? = null
     val binding get() = _binding!!
 
@@ -51,6 +54,11 @@ class SavedBadgesFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val transferButton = view.findViewById<Button>(R.id.transfer_all)
+        transferButton.setOnClickListener {
+            sendAll()
+        }
 
         setupRecycler()
         updateEmptyLayout()
@@ -80,12 +88,8 @@ class SavedBadgesFragment : BaseFragment() {
     }
 
     override fun getSendData(): DataToSend {
-        val selectedItem = recyclerAdapter?.getSelectedItem()
-        return if (selectedItem != null) {
-            SendingUtils.returnMessageWithJSON(selectedItem.badgeJSON)
-        } else {
-            SendingUtils.returnDefaultMessage()
-        }
+        val jsons = selectedForSending.map { it.badgeJSON }.toList()
+        return SendingUtils.returnMessagesWithJSON(jsons)
     }
 
     private fun setupRecycler() = with(binding) {
@@ -116,15 +120,12 @@ class SavedBadgesFragment : BaseFragment() {
                             deleteWarning(item)
                         }
 
-                        override fun transfer(item: ConfigInfo) {
-                            transferItem(item)
+                        override fun onSetEnabledForSend(item: ConfigInfo, enabled: Boolean) {
+                            setEnabledForSend(item, enabled)
                         }
 
-                        override fun export(item: ConfigInfo) {
-                            if (bluetoothAdapter.isTurnedOn(requireContext())) {
-                                Toast.makeText(requireContext(), getString(R.string.sending_data), Toast.LENGTH_LONG).show()
-                                SendingUtils.sendMessage(requireContext(), getSendData())
-                            }
+                        override fun share(item: ConfigInfo) {
+                            shareItem(item)
                         }
 
                         override fun onSelected(item: ConfigInfo?) {
@@ -141,7 +142,15 @@ class SavedBadgesFragment : BaseFragment() {
         )
     }
 
-    private fun transferItem(item: ConfigInfo) {
+    private fun setEnabledForSend(item: ConfigInfo, enabled: Boolean) {
+        if (enabled) {
+            selectedForSending += item
+        } else {
+            selectedForSending -= item
+        }
+    }
+
+    private fun shareItem(item: ConfigInfo) {
         val intentShareFile = Intent(Intent.ACTION_SEND)
         val fileUri = FileProvider.getUriForFile(
             requireContext(),
@@ -159,6 +168,13 @@ class SavedBadgesFragment : BaseFragment() {
         intentShareFile.putExtra(Intent.EXTRA_TEXT, File(viewModel.getAbsPath(item.fileName)).readText())
 
         this.startActivity(Intent.createChooser(intentShareFile, item.fileName))
+    }
+
+    private fun sendAll() {
+        if (bluetoothAdapter.isTurnedOn(requireContext())) {
+            Toast.makeText(requireContext(), getString(R.string.sending_data), Toast.LENGTH_LONG).show()
+            SendingUtils.sendMessage(requireContext(), getSendData())
+        }
     }
 
     private fun deleteWarning(item: ConfigInfo) {

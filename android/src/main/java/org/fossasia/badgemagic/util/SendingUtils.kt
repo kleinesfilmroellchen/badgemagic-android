@@ -59,36 +59,44 @@ object SendingUtils {
         return DataToSend(listOf(message))
     }
 
+    private fun defaultMessage(): Message {
+        return Message(
+            Converters.convertTextToLEDHex(
+                " ",
+                false
+            ).second,
+            flash = false,
+            marquee = false,
+            speed = Speed.ONE,
+            mode = Mode.LEFT
+        )
+    }
+
     fun returnDefaultMessage(): DataToSend {
+        return DataToSend(listOf(defaultMessage()))
+    }
+
+    private fun convertSingleMessage(badgeJSON: String): Message {
+        val badgeConfig = getBadgeFromJSON(badgeJSON)
+        return Message(
+            Converters.fixLEDHex(badgeConfig.hexStrings, badgeConfig.isInverted),
+            badgeConfig.isFlash,
+            badgeConfig.isMarquee,
+            badgeConfig.speed,
+            badgeConfig.mode
+        )
+    }
+
+    fun returnMessagesWithJSON(jsons: Iterable<String>): DataToSend {
         return DataToSend(
-            listOf(
-                Message(
-                    Converters.convertTextToLEDHex(
-                        " ",
-                        false
-                    ).second,
-                    flash = false,
-                    marquee = false,
-                    speed = Speed.ONE,
-                    mode = Mode.LEFT
-                )
-            )
+            jsons.map {
+                convertSingleMessage(it)
+            }.toList()
         )
     }
 
     fun returnMessageWithJSON(badgeJSON: String): DataToSend {
-        val badgeConfig = getBadgeFromJSON(badgeJSON)
-        return DataToSend(
-            listOf(
-                Message(
-                    Converters.fixLEDHex(badgeConfig.hexStrings, badgeConfig.isInverted),
-                    badgeConfig.isFlash,
-                    badgeConfig.isMarquee,
-                    badgeConfig.speed,
-                    badgeConfig.mode
-                )
-            )
-        )
+        return DataToSend(listOf(convertSingleMessage(badgeJSON)))
     }
 
     fun configToJSON(data: Message, invertLED: Boolean): String {

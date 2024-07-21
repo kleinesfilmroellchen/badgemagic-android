@@ -54,8 +54,10 @@ class SaveAdapter(private val context: Context?, private val list: List<ConfigIn
         private val chipSpeed: Chip = itemView.findViewById(R.id.chip_speed)
         private val chipMode: Chip = itemView.findViewById(R.id.chip_mode)
         private val delete: AppCompatImageView = itemView.findViewById(R.id.button_delete)
-        private val transfer: AppCompatImageView = itemView.findViewById(R.id.button_transfer)
-        private val export: AppCompatImageView = itemView.findViewById(R.id.button_export)
+        private val share: AppCompatImageView = itemView.findViewById(R.id.button_share)
+        private val send: AppCompatImageView = itemView.findViewById(R.id.button_send)
+
+        private var isTransferEnabled = false
 
         init {
             playPause.setOnClickListener {
@@ -68,11 +70,17 @@ class SaveAdapter(private val context: Context?, private val list: List<ConfigIn
             delete.setOnClickListener {
                 listener.onOptionSelectDelete(list[adapterPosition])
             }
-            transfer.setOnClickListener {
-                listener.transfer(list[adapterPosition])
+            share.setOnClickListener {
+                listener.share(list[adapterPosition])
             }
-            export.setOnClickListener {
-                listener.export(list[adapterPosition])
+            send.setOnClickListener {
+                isTransferEnabled = !isTransferEnabled
+                listener.onSetEnabledForSend(list[adapterPosition], isTransferEnabled)
+                if (isTransferEnabled) {
+                    send.setBackgroundColor(context!!.resources.getColor(R.color.colorPrimary))
+                } else {
+                    send.setBackgroundColor(R.attr.selectableItemBackground)
+                }
             }
         }
 
@@ -108,14 +116,14 @@ class SaveAdapter(private val context: Context?, private val list: List<ConfigIn
                 }
             )
 
-            transfer.setColorFilter(
+            share.setColorFilter(
                 when {
                     selectedPosition != -1 && selectedPosition == adapterPosition -> ContextCompat.getColor(itemView.context, android.R.color.white)
                     else -> ContextCompat.getColor(itemView.context, android.R.color.black)
                 }
             )
 
-            export.setColorFilter(
+            send.setColorFilter(
                 when {
                     selectedPosition != -1 && selectedPosition == adapterPosition -> ContextCompat.getColor(itemView.context, android.R.color.white)
                     else -> ContextCompat.getColor(itemView.context, android.R.color.black)
@@ -150,6 +158,6 @@ interface OnSavedItemSelected {
     fun onSelected(item: ConfigInfo?)
     fun onEdit(item: ConfigInfo?)
     fun onOptionSelectDelete(item: ConfigInfo)
-    fun transfer(item: ConfigInfo)
-    fun export(item: ConfigInfo)
+    fun onSetEnabledForSend(item: ConfigInfo, enabled: Boolean)
+    fun share(item: ConfigInfo)
 }

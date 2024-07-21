@@ -71,6 +71,12 @@
             android:textStyle="bold"
             android:typeface="normal" />
 
+        <Button
+            android:id="@+id/transfer_all"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/transfer_button" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/savedConfigRecyclerView"
             android:layout_width="match_parent"
